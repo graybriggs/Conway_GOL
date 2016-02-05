@@ -1,6 +1,7 @@
 	
 #include <SDL/SDL.h>
 
+#include <algorithm>
 #include <array>
 
 const int SCREEN_W = 1024;
