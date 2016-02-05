@@ -1,4 +1,4 @@
-
+	
 #include <SDL/SDL.h>
 
 #include <array>
@@ -15,44 +15,60 @@ class GolGrid {
 public:
 	GolGrid() 
 		: running(false),
-		  mouse_click(false) {
+		  left_mouse_click(false),
+		  right_mouse_click(false) {
+
 		reset_grid();
 	}
 
-	void input_reset_grid(SDL_Event event) {
-		if (event.key.keysym.sym == SDLK_r) {
-			reset_grid();
-		}
-	}
-
-	void input_start_stop(SDL_Event event) {
-		if (event.key.keysym.sym == SDLK_SPACE) {
-			running = !running;
+	void input_key(SDL_Event event) {
+		if (event.type == SDL_KEYUP) {
+			if (event.key.keysym.sym == SDLK_r) {
+				reset_grid();
+			}
+			else if (event.key.keysym.sym == SDLK_SPACE) {
+				running = !running;
+			}
 		}
 	}
 
 	void click_grid(SDL_Event event) {
 		int x, y;
 		if (event.button.type == SDL_MOUSEBUTTONDOWN) {
-			mouse_click = true;
+			if (event.button.button == SDL_BUTTON_LEFT) {
+				left_mouse_click = true;
+			}
+			else if (event.button.button == SDL_BUTTON_RIGHT) {
+				right_mouse_click = true;
+			}
 		}
 		else if (event.button.type == SDL_MOUSEBUTTONUP) {
-			mouse_click = false;
+			if (event.button.button == SDL_BUTTON_LEFT) {
+				left_mouse_click = false;
+			}
+			else if (event.button.button == SDL_BUTTON_RIGHT) {
+				right_mouse_click = false;
+			}
 		}
 
 
-		if (mouse_click) {
+		if (left_mouse_click) {
 			x = event.button.x;
 			y = event.button.y;
 
 			int index = USER_GRID_W * int(y / CELL_SIZE) + int(x / CELL_SIZE);
 
-			if (!current_grid[index])
-				current_grid[index] = true;
-			else ;
-				//current_grid[index] = false;
-
+			current_grid[index] = true;
 		}
+		else if (right_mouse_click) {
+			x = event.button.x;
+			y = event.button.y;
+
+			int index = USER_GRID_W * int(y / CELL_SIZE) + int(x / CELL_SIZE);
+
+			current_grid[index] = false;	
+		}
+
 	}
 
 
@@ -60,7 +76,7 @@ public:
 
 		if (running) {
 
-			for (int i = 0; i < USER_GRID_W * USER_GRID_H; ++i) {
+			for (int i = 64; i < USER_GRID_W * USER_GRID_H - 64; ++i) {
 
 				if (current_grid[i]) {
 					if (check_adjacent_cells(i) < 2) {
@@ -156,14 +172,13 @@ private:
 	}
 
 	void reset_grid() {
-		for (unsigned i = 0; i < current_grid.size(); ++i) {
-			current_grid[i] = false;
-			next_grid[i] = false;
-		}
+		std::fill(std::begin(current_grid), std::end(current_grid), false);
+		std::fill(std::begin(next_grid), std::end(next_grid), false);
 	}
 
 	bool running;
-	bool mouse_click;
+	bool left_mouse_click;
+	bool right_mouse_click;
 
 	std::array<bool, USER_GRID_W * USER_GRID_H> current_grid;
 	std::array<bool, USER_GRID_W * USER_GRID_H> next_grid;
@@ -191,12 +206,9 @@ int main(int argc, char** args) {
 		}
 
 		grid.click_grid(event);
-		grid.input_reset_grid(event);
-		grid.input_start_stop(event);
+		grid.input_key(event);
 
 		grid.run_gol();
-
-		//grid.swap_grids();
 
 		SDL_FillRect(SDL_GetVideoSurface(), nullptr, 0x000000);
 		grid.render_grid();
