@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <array>
 
+#include "timer.h"
+
 const int SCREEN_W = 1024;
 const int SCREEN_H = 768;
 const int SCREEN_BPP = 32;
@@ -187,9 +189,12 @@ private:
 };
 
 
+const float FPS = 60;
+const float TICKS_PER_FRAME = 1000.0f / FPS;
+
 int main(int argc, char** args) {
 
-	SDL_Init(SDL_INIT_VIDEO);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 
 	SDL_SetVideoMode(SCREEN_W, SCREEN_H, SCREEN_BPP, SDL_SWSURFACE);
 
@@ -199,7 +204,13 @@ int main(int argc, char** args) {
 
 	GolGrid grid;
 
+	int start_time = SDL_GetTicks();
+
+	Timer cap_timer;
+
 	while (!done) {
+
+		cap_timer.start();
 
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_QUIT)
@@ -217,7 +228,9 @@ int main(int argc, char** args) {
 
 		grid.swap_grids();
 
-		SDL_Delay(50);
+		float frame_time = cap_timer.get_ticks();
+		if (frame_time < TICKS_PER_FRAME)
+			SDL_Delay(TICKS_PER_FRAME - frame_time);
 		
 	}
 	SDL_Quit();
